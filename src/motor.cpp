@@ -1,27 +1,32 @@
 #include "motor.h"
+#include <Arduino.h>
 
-Motor::Motor(uint8_t pin)
-    : _pin(pin), _isOn(false) {}
+Motor::Motor(uint8_t pinA, uint8_t pinB)
+    : _pinA(pinA), _pinB(pinB)
+{
+}
 
 void Motor::begin()
 {
-    pinMode(_pin, OUTPUT);
-    off(); // Ensure motor is off initially
+    pinMode(_pinA, OUTPUT);
+    pinMode(_pinB, OUTPUT);
+    stop(); // Ensure motor is off initially
 }
 
-void Motor::on()
+void Motor::forward()
 {
-    digitalWrite(_pin, HIGH); // Activate the optocoupler/triac
-    _isOn = true;
+    digitalWrite(_pinA, HIGH);
+    digitalWrite(_pinB, LOW);
 }
 
-void Motor::off()
+void Motor::reverse()
 {
-    digitalWrite(_pin, LOW); // Deactivate the optocoupler/triac
-    _isOn = false;
+    digitalWrite(_pinA, LOW);
+    digitalWrite(_pinB, HIGH);
 }
 
-bool Motor::isOn()
+void Motor::stop()
 {
-    return _isOn;
+    digitalWrite(_pinA, LOW);
+    digitalWrite(_pinB, LOW);
 }

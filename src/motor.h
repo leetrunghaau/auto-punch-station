@@ -6,15 +6,15 @@
 class Motor
 {
 public:
-    Motor(uint8_t pin);
+    Motor(uint8_t pinA, uint8_t pinB);
     void begin();
-    void on();
-    void off();
-    bool isOn();
+    void forward();
+    void reverse();
+    void stop();
 
 private:
-    uint8_t _pin;
-    bool _isOn;
+    uint8_t _pinA;
+    uint8_t _pinB;
 };
 
 #endif

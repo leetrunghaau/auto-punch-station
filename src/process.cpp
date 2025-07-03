@@ -1,17 +1,17 @@
 #include "process.h"
 #include "pinConfig.h"
 
-Process::Process(Motor &motorPunch, Motor &motorConveyor, Heater &heater)
+Process::Process(Motor &motorPunch, Motor &motorConveyor, Heater &heater,
+                 Button &startButton, Button &punchLimitUp, Button &punchLimitDown,
+                 Button &conveyorLimitIn, Button &conveyorLimitOut)
     : _motorPunch(motorPunch), _motorConveyor(motorConveyor), _heater(heater),
-      _currentState(IDLE), _waitStartTime(0) {}
+      _startButton(startButton), _punchLimitUp(punchLimitUp), _punchLimitDown(punchLimitDown),
+      _conveyorLimitIn(conveyorLimitIn), _conveyorLimitOut(conveyorLimitOut),
+      _currentState(IDLE), _waitStartTime(0), _motorTimeoutStartTime(0) {}
 
 void Process::begin()
 {
-    pinMode(PIN_PUNCH_LIMIT_UP, INPUT_PULLUP);
-    pinMode(PIN_PUNCH_LIMIT_DOWN, INPUT_PULLUP);
-    pinMode(PIN_CONVEYOR_LIMIT_IN, INPUT_PULLUP);
-    pinMode(PIN_CONVEYOR_LIMIT_OUT_SAFE, INPUT_PULLUP); // Using the safe pin
-    pinMode(PIN_START_BUTTON, INPUT_PULLUP);
+    // pinMode for input pins is handled by Button class constructor
 
     // Always keep the heater on (as per new requirement)
     _heater.turnOn();
@@ -40,68 +40,93 @@ void Process::loop()
     case CONVEYOR_MOVING_OUT:
         handleConveyorOut();
         break;
+    case ERROR_STATE:
+        handleError();
+        break;
     }
 }
 
 void Process::handleIdle()
 {
     // Wait for the start button to be pressed
-    if (digitalRead(PIN_START_BUTTON) == LOW)
+    if (_startButton.wasPressed())
     {
-        // Debounce delay
-        delay(50);
-        if (digitalRead(PIN_START_BUTTON) == LOW)
-        {
-            _currentState = CONVEYOR_MOVING_IN;
-        }
+        _currentState = CONVEYOR_MOVING_IN;
+        _motorTimeoutStartTime = millis(); // Start timeout for motor
     }
 }
 
 void Process::handleConveyorIn()
 {
-    _motorConveyor.on();
-    if (digitalRead(PIN_CONVEYOR_LIMIT_IN) == LOW)
+    _motorConveyor.forward();
+    if (_conveyorLimitIn.isPressed())
     {
-        _motorConveyor.off();
+        _motorConveyor.stop();
         _currentState = PUNCHING_DOWN;
+        _motorTimeoutStartTime = millis(); // Start timeout for motor
+    } else if (millis() - _motorTimeoutStartTime >= MOTOR_TIMEOUT_MS) {
+        _motorConveyor.stop();
+        _currentState = ERROR_STATE;
     }
 }
 
 void Process::handlePunchDown()
 {
-    _motorPunch.on(); // Assuming 'on' moves it down
-    if (digitalRead(PIN_PUNCH_LIMIT_DOWN) == LOW)
+    _motorPunch.forward(); // Move punch down
+    if (_punchLimitDown.isPressed())
     {
-        _motorPunch.off();
+        _motorPunch.stop();
         _waitStartTime = millis();
         _currentState = WAITING;
+    } else if (millis() - _motorTimeoutStartTime >= MOTOR_TIMEOUT_MS) {
+        _motorPunch.stop();
+        _currentState = ERROR_STATE;
     }
 }
 
 void Process::handleWaiting()
 {
-    if (millis() - _waitStartTime >= 3000)
+    if (millis() - _waitStartTime >= HEATER_WAIT_TIME_MS)
     {
         _currentState = PUNCHING_UP;
+        _motorTimeoutStartTime = millis(); // Start timeout for motor
     }
 }
 
 void Process::handlePunchUp()
 {
-    _motorPunch.on(); // Assuming 'on' moves it up (this might need hardware adjustment if it's a single direction motor)
-    if (digitalRead(PIN_PUNCH_LIMIT_UP) == LOW)
+    _motorPunch.reverse(); // Move punch up
+    if (_punchLimitUp.isPressed())
     {
-        _motorPunch.off();
+        _motorPunch.stop();
         _currentState = CONVEYOR_MOVING_OUT;
+        _motorTimeoutStartTime = millis(); // Start timeout for motor
+    } else if (millis() - _motorTimeoutStartTime >= MOTOR_TIMEOUT_MS) {
+        _motorPunch.stop();
+        _currentState = ERROR_STATE;
     }
 }
 
 void Process::handleConveyorOut()
 {
-    _motorConveyor.on();
-    if (digitalRead(PIN_CONVEYOR_LIMIT_OUT_SAFE) == LOW) // Using the safe pin
+    _motorConveyor.forward();
+    if (_conveyorLimitOut.isPressed())
     { 
-        _motorConveyor.off();
+        _motorConveyor.stop();
         _currentState = IDLE; // Cycle complete
+    } else if (millis() - _motorTimeoutStartTime >= MOTOR_TIMEOUT_MS) {
+        _motorConveyor.stop();
+        _currentState = ERROR_STATE;
     }
+}
+
+void Process::handleError()
+{
+    // Stop all motors
+    _motorPunch.stop();
+    _motorConveyor.stop();
+    // Optionally, turn off heater or flash an error LED
+    // _heater.turnOff(); 
+    // Add code to indicate error (e.g., flash an LED)
+    // For now, just stay in error state until reset
 }

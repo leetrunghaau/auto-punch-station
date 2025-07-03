@@ -41,35 +41,49 @@ Sơ đồ này triển khai một **hệ thống điều khiển AC đa kênh** 
 - **Nguồn:** +5V từ HLK-10M05
 
 **Các chân quan trọng:**
-- Đầu ra kỹ thuật số đến EL357 để điều khiển AC
+- Đầu ra kỹ thuật số đến MOC3063M để điều khiển AC
 - Đầu vào kỹ thuật số từ EL357 để phản hồi cảm biến
 - Các chân SPI để lập trình
 
 ---
+## 🔹 3. Điều khiển đầu ra (Động cơ AC)
 
-## 🔹 3. Điều khiển đầu ra (Tải AC)
+**Mỗi động cơ AC được điều khiển bởi 2 MOC3063M + 2 Triac công suất, để thực hiện chức năng đảo chiều:**
 
-**Mỗi kênh tải AC bao gồm:**
-- Bộ cách ly quang EL357
-  - **Đầu vào:** Chân đầu ra của MCU
-  - **Đầu ra:** Kích hoạt đèn LED MOC3063M
-- MOC3063M (Trình điều khiển Opto-Triac với tính năng phát hiện điểm không)
-  - **Đầu vào:** Từ EL357
-  - **Đầu ra:** Điều khiển Triac bên ngoài (không hiển thị)
-- Đèn LED trạng thái để chỉ báo đầu ra BẬT
+- **MOC3063M:**
+  - **Đầu vào:**
+    - **Chân 1:** +5V qua điện trở hạn dòng
+    - **Chân 2:** Tín hiệu điều khiển từ MCU (kéo GND để kích hoạt)
+    - **Chân 6:** Nối dây lửa AC qua điện trở 360Ω (để phát hiện điểm không)
+  - **Đầu ra:**
+    - **Chân 4:** Tín hiệu kích Gate của Triac BT16-800B
 
-**Tổng số kênh: 8**
+- **BT16-800B (Triac công suất):**
+  - **Chân G:** Nhận tín hiệu kích từ MOC3063M
+  - **Chân A1 / A2:** Được đấu với cuộn khởi động (start winding) của động cơ AC, để đảo chiều
 
-| Kênh số | Tham chiếu EL357 | Tham chiếu MOC3063M | Chân điều khiển MCU |
+**Nguyên lý:**
+- **Mỗi động cơ AC sử dụng 2 MOC3063M và 2 Triac để đảo chiều quay.**
+- Trong thực tế:
+  - MOC + Triac số 1 điều khiển trạng thái quay thuận (nối cuộn khởi động theo chiều thuận)
+  - MOC + Triac số 2 điều khiển trạng thái quay nghịch (nối cuộn khởi động đảo cực)
+- **Chỉ được phép kích hoạt 1 cặp MOC/Triac tại một thời điểm để tránh chập mạch.**
+
+**Đèn LED trạng thái:**
+- Nối song song LED trong MOC3063M (qua điện trở)
+- Sáng khi kênh tương ứng được kích hoạt
+
+---
+
+## 🔹 4. Bảng ánh xạ chân điều khiển MCU
+
+| Động cơ | MOC3063M | Chân điều khiển MCU | Chức năng |
 |---|---|---|---|
-| 1 | *4 | U1 | D4 |
-| 2 | *5 | U2 | D3 |
-| 3 | *6 | U4 | D2 |
-| 4 | *7 | U5 | A5 |
-| 5 | *8 | - | A4 |
-| 6 | *9 | - | A3 |
-| 7 | *10 | - | A1 |
-| 8 | *11 | - | A2 |
+| Motor 1 | U1 | D5 | Quay thuận |
+| Motor 1 | U2 | D7 | Quay nghịch |
+| Motor 2 | U4 | D6 | Quay thuận |
+| Motor 2 | U5 | D8 | Quay nghịch |
+
 
 **Ghi chú:**
 - Chân phát hiện điểm không của MOC3063M được kết nối (một số kênh)
@@ -83,20 +97,20 @@ Sơ đồ này triển khai một **hệ thống điều khiển AC đa kênh** 
 **Mỗi tín hiệu đầu vào:**
 - Đi qua một bộ cách ly quang EL357
   - Cách ly mạch ngoài khỏi MCU
-- Kéo lên VCC thông qua điện trở
+- Kéo lên VCC thông qua điện trở 10k
 
 **Tổng số đầu vào: 8**
 
 | Tham chiếu đầu vào | Tên tín hiệu | Chân MCU |
 |---|---|---|
-| A_O | Đầu vào A | D3 |
-| B_O | Đầu vào B | D4 |
-| C_O | Đầu vào C | A5 |
-| D_O | Đầu vào D | A1 |
-| E_O | Đầu vào E | A3 |
-| F_O | Đầu vào F | A4 |
-| G_O | Đầu vào G | A2 |
-| H_O | Đầu vào H | (Tùy chọn) |
+| A_O | Đầu vào A | D4 |
+| B_O | Đầu vào B | D3 |
+| C_O | Đầu vào C | D2 |
+| D_O | Đầu vào D | A5 |
+| E_O | Đầu vào E | A4 |
+| F_O | Đầu vào F | A3 |
+| G_O | Đầu vào G | A1 |
+| H_O | Đầu vào H | A2 |
 
 **Ví dụ sử dụng:**
 - Công tắc hành trình Dập Xuống
@@ -161,6 +175,13 @@ Sơ đồ này triển khai một **hệ thống điều khiển AC đa kênh** 
 
 ---
 
+
+## 📝 Ghi chú về chân A0
+- Chân **A0** được dùng để **giám sát tín hiệu nguồn AC** (thường qua mạch chia áp + opto).
+- Khi nguồn AC mất, tín hiệu A0 sẽ chuyển mức thấp, MCU có thể dừng toàn bộ hệ thống.
+
+---
+
 ## 🔹 9. Các mở rộng tùy chọn
 
 - Kết nối đầu ra Zero-Cross với MCU để điều khiển pha
@@ -184,3 +205,4 @@ Sơ đồ này triển khai một **hệ thống điều khiển AC đa kênh** 
 - Sơ đồ nguyên lý `schematic.pdf`
 - Bảng dữ liệu MOC3063M
 - Bảng dữ liệu EL357
+
