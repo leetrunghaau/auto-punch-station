@@ -1,66 +1,66 @@
-# Schematic Documentation
+# Tài liệu Sơ đồ nguyên lý
 
-## Machine Punch Controller Schematic Overview
+## Tổng quan Sơ đồ nguyên lý Bộ điều khiển máy dập
 
-This schematic implements a **multi-channel AC control system** based on ATmega328P, capable of:
+Sơ đồ này triển khai một **hệ thống điều khiển AC đa kênh** dựa trên ATmega328P, có khả năng:
 
-- Driving up to **8 AC loads** (motors, heaters, lamps)
-- Reading up to **8 opto-isolated digital inputs**
-- Zero-crossing detection for AC phase control
-- Providing status LEDs for each channel
-- Isolated logic via optocouplers
+- Điều khiển tới **8 tải AC** (động cơ, bộ gia nhiệt, đèn)
+- Đọc tới **8 đầu vào kỹ thuật số cách ly quang**
+- Phát hiện điểm không (zero-crossing) để điều khiển pha AC
+- Cung cấp đèn LED trạng thái cho mỗi kênh
+- Logic cách ly thông qua bộ cách ly quang
 
 ---
 
-## 🔹 1. Power Supply
+## 🔹 1. Nguồn điện
 
 ### HLK-10M05
-- **Purpose:** Convert AC 220V to DC 5V
-- **Outputs:**
+- **Mục đích:** Chuyển đổi AC 220V sang DC 5V
+- **Đầu ra:**
   - +5V DC (VCC_2)
   - GND
 
-**Filtering capacitors:**
+**Tụ lọc:**
 - C3, C4, C12
 
-**Usage:**
-- Power for MCU, optocouplers, logic circuits
+**Sử dụng:**
+- Cấp nguồn cho MCU, bộ cách ly quang, mạch logic
 
 ---
 
-## 🔹 2. MCU Section
+## 🔹 2. Phần MCU
 
 ### ATmega328P
-- **Role:** Central controller
-- **Features:**
-  - 32 digital IOs
-  - UART serial communication
-  - SPI ISP programming interface
-  - Clock: 16 MHz crystal (Y1) + C7/C11 capacitors
-  - Reset circuitry: Pull-up resistor + capacitor
-- **Power:** +5V from HLK-10M05
+- **Vai trò:** Bộ điều khiển trung tâm
+- **Tính năng:**
+  - 32 chân IO kỹ thuật số
+  - Giao tiếp nối tiếp UART
+  - Giao diện lập trình SPI ISP
+  - Xung nhịp: Thạch anh 16 MHz (Y1) + tụ C7/C11
+  - Mạch reset: Điện trở kéo lên + tụ điện
+- **Nguồn:** +5V từ HLK-10M05
 
-**Important Pins:**
-- Digital outputs to EL357 for AC control
-- Digital inputs from EL357 for sensor feedback
-- SPI pins for programming
+**Các chân quan trọng:**
+- Đầu ra kỹ thuật số đến EL357 để điều khiển AC
+- Đầu vào kỹ thuật số từ EL357 để phản hồi cảm biến
+- Các chân SPI để lập trình
 
 ---
 
-## 🔹 3. Output Control (AC Loads)
+## 🔹 3. Điều khiển đầu ra (Tải AC)
 
-**Each AC load channel consists of:**
-- EL357 optocoupler
-  - **Input:** MCU output pin
-  - **Output:** Triggers MOC3063M LED
-- MOC3063M (Opto-Triac driver with zero-cross detection)
-  - **Input:** From EL357
-  - **Output:** Drives external Triac (not shown)
-- Status LED to indicate output ON
+**Mỗi kênh tải AC bao gồm:**
+- Bộ cách ly quang EL357
+  - **Đầu vào:** Chân đầu ra của MCU
+  - **Đầu ra:** Kích hoạt đèn LED MOC3063M
+- MOC3063M (Trình điều khiển Opto-Triac với tính năng phát hiện điểm không)
+  - **Đầu vào:** Từ EL357
+  - **Đầu ra:** Điều khiển Triac bên ngoài (không hiển thị)
+- Đèn LED trạng thái để chỉ báo đầu ra BẬT
 
-**Total Channels: 8**
+**Tổng số kênh: 8**
 
-| Channel No. | EL357 Ref | MOC3063M Ref | MCU Control Pin |
+| Kênh số | Tham chiếu EL357 | Tham chiếu MOC3063M | Chân điều khiển MCU |
 |---|---|---|---|
 | 1 | *4 | U1 | D4 |
 | 2 | *5 | U2 | D3 |
@@ -71,117 +71,116 @@ This schematic implements a **multi-channel AC control system** based on ATmega3
 | 7 | *10 | - | A1 |
 | 8 | *11 | - | A2 |
 
-**Notes:**
-- MOC3063M zero-cross pin is connected (some channels)
-- Each EL357 output is in series with a resistor and LED
-- Output loads are connected to AC mains via Triac
+**Ghi chú:**
+- Chân phát hiện điểm không của MOC3063M được kết nối (một số kênh)
+- Mỗi đầu ra EL357 nối tiếp với một điện trở và đèn LED
+- Tải đầu ra được kết nối với nguồn AC thông qua Triac
 
 ---
 
-## 🔹 4. Input Control (Sensors / Limit Switches)
+## 🔹 4. Điều khiển đầu vào (Cảm biến / Công tắc hành trình)
 
-**Each input signal:**
-- Comes through an EL357 optocoupler
-  - Isolates external circuits from MCU
-- Pulled up to VCC via resistor
+**Mỗi tín hiệu đầu vào:**
+- Đi qua một bộ cách ly quang EL357
+  - Cách ly mạch ngoài khỏi MCU
+- Kéo lên VCC thông qua điện trở
 
-**Total Inputs: 8**
+**Tổng số đầu vào: 8**
 
-| Input Ref | Signal Name | MCU Pin |
+| Tham chiếu đầu vào | Tên tín hiệu | Chân MCU |
 |---|---|---|
-| A_O | Input A | D3 |
-| B_O | Input B | D4 |
-| C_O | Input C | A5 |
-| D_O | Input D | A1 |
-| E_O | Input E | A3 |
-| F_O | Input F | A4 |
-| G_O | Input G | A2 |
-| H_O | Input H | (Optional) |
+| A_O | Đầu vào A | D3 |
+| B_O | Đầu vào B | D4 |
+| C_O | Đầu vào C | A5 |
+| D_O | Đầu vào D | A1 |
+| E_O | Đầu vào E | A3 |
+| F_O | Đầu vào F | A4 |
+| G_O | Đầu vào G | A2 |
+| H_O | Đầu vào H | (Tùy chọn) |
 
-**Example uses:**
-- Limit switch Punch Down
-- Limit switch Punch Up
-- Conveyor Start
-- Conveyor End
-- Start button
-- Emergency stop
+**Ví dụ sử dụng:**
+- Công tắc hành trình Dập Xuống
+- Công tắc hành trình Dập Lên
+- Băng tải Bắt đầu
+- Băng tải Kết thúc
+- Nút khởi động
+- Dừng khẩn cấp
 
 ---
 
-## 🔹 5. Zero-Cross Detection Circuits
+## 🔹 5. Mạch phát hiện điểm không
 
-**Purpose:**
-- Detect AC zero-cross events
-- Allow phase-controlled firing of Triac (future PWM control)
+**Mục đích:**
+- Phát hiện các sự kiện điểm không của AC
+- Cho phép kích hoạt Triac theo pha (điều khiển PWM trong tương lai)
 
-**Components:**
-- 4x MOC3063M wired for zero-cross detection
-- Outputs can be fed into MCU interrupt pins
+**Các thành phần:**
+- 4x MOC3063M được nối dây để phát hiện điểm không
+- Đầu ra có thể được đưa vào các chân ngắt của MCU
 
-**Refs:**
+**Tham chiếu:**
 - U1, U2, U4, U5
 
 ---
 
-## 🔹 6. Status LEDs
+## 🔹 6. Đèn LED trạng thái
 
-**Each output channel has:**
-- LED (0805) in series with 2k resistor
-- Lights up when channel is active
+**Mỗi kênh đầu ra có:**
+- Đèn LED (0805) nối tiếp với điện trở 2k
+- Sáng lên khi kênh hoạt động
 
-**Purpose:**
-- Visual confirmation of outputs ON/OFF
-
----
-
-## 🔹 7. Communication & Programming
-
-**Serial Communication:**
-- TXD, RXD pins exposed
-- Used for monitoring and debugging
-
-**ISP Interface:**
-- SPI pins (MISO, MOSI, SCK)
-- Supports firmware upload via programmer
+**Mục đích:**
+- Xác nhận trực quan trạng thái BẬT/TẮT của đầu ra
 
 ---
 
-## 🔹 8. Suggested Output Mapping
+## 🔹 7. Giao tiếp & Lập trình
 
-| Function | EL357 Channel | MCU Pin | Notes |
+**Giao tiếp nối tiếp:**
+- Các chân TXD, RXD được đưa ra ngoài
+- Được sử dụng để giám sát và gỡ lỗi
+
+**Giao diện ISP:**
+- Các chân SPI (MISO, MOSI, SCK)
+- Hỗ trợ tải firmware thông qua bộ lập trình
+
+---
+
+## 🔹 8. Đề xuất ánh xạ đầu ra
+
+| Chức năng | Kênh EL357 | Chân MCU | Ghi chú |
 |---|---|---|---|
-| Heater | *4 | D4 | Output AC load 1 |
-| Motor Punch | *5 | D3 | Output AC load 2 |
-| Motor Conveyor | *6 | D2 | Output AC load 3 |
-| Indicator Lamp | *7 | A5 | Output AC load 4 |
-| (Free) | *8 | A4 | Spare channel |
-| (Free) | *9 | A3 | Spare channel |
-| (Free) | *10 | A1 | Spare channel |
-| (Free) | *11 | A2 | Spare channel |
+| Bộ gia nhiệt | *4 | D4 | Tải AC đầu ra 1 |
+| Động cơ dập | *5 | D3 | Tải AC đầu ra 2 |
+| Động cơ băng tải | *6 | D2 | Tải AC đầu ra 3 |
+| Đèn báo | *7 | A5 | Tải AC đầu ra 4 |
+| (Trống) | *8 | A4 | Kênh dự phòng |
+| (Trống) | *9 | A3 | Kênh dự phòng |
+| (Trống) | *10 | A1 | Kênh dự phòng |
+| (Trống) | *11 | A2 | Kênh dự phòng |
 
 ---
 
-## 🔹 9. Optional Extensions
+## 🔹 9. Các mở rộng tùy chọn
 
-- Connect Zero-Cross outputs to MCU for phase control
-- Use unused channels for additional motors or heaters
-- Add EEPROM for configuration
-- Integrate OLED display
-
----
-
-## ⚠ Safety Notes
-
-- All AC wiring must be done with proper insulation
-- Optocoupler isolation protects MCU but not relay wiring
-- Ensure proper grounding of chassis
-- Use fuses and circuit breakers for overload protection
+- Kết nối đầu ra Zero-Cross với MCU để điều khiển pha
+- Sử dụng các kênh không sử dụng cho các động cơ hoặc bộ gia nhiệt bổ sung
+- Thêm EEPROM để cấu hình
+- Tích hợp màn hình OLED
 
 ---
 
-## 📝 References
+## ⚠ Lưu ý an toàn
 
-- `schematic.pdf` schematic diagram
-- MOC3063M datasheet
-- EL357 datasheet
+- Tất cả hệ thống dây điện AC phải được thực hiện với cách điện thích hợp
+- Cách ly quang bảo vệ MCU nhưng không bảo vệ hệ thống dây rơle
+- Đảm bảo nối đất khung gầm đúng cách
+- Sử dụng cầu chì và bộ ngắt mạch để bảo vệ quá tải
 
+---
+
+## 📝 Tham khảo
+
+- Sơ đồ nguyên lý `schematic.pdf`
+- Bảng dữ liệu MOC3063M
+- Bảng dữ liệu EL357

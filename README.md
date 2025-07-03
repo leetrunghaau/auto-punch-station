@@ -1,69 +1,71 @@
-# Automated Conveyor, Punch, and Heat Station
+# Trạm Băng Tải, Dập và Gia Nhiệt Tự Động
 
-## Project Overview
+## Tổng quan dự án
 
-This is an embedded systems project developed with PlatformIO to control a small automated workstation.  
-The system manages a conveyor belt, a punching mechanism, and a heating element to perform a **sequential manufacturing process**.
+Đây là một dự án hệ thống nhúng được phát triển với PlatformIO để điều khiển một trạm làm việc tự động nhỏ.
+Hệ thống quản lý một băng tải, một cơ chế dập và một bộ phận gia nhiệt để thực hiện một **quy trình sản xuất tuần tự**.
 
-The target hardware is an ATmega328-based microcontroller, commonly found on boards like the Arduino Uno or Nano.
+Phần cứng mục tiêu là vi điều khiển dựa trên ATmega328, thường được tìm thấy trên các bo mạch như Arduino Uno hoặc Nano.
 
-## Core Components
+## Các thành phần cốt lõi
 
-The system controls the following hardware:
+Hệ thống điều khiển các phần cứng sau:
 
-1. **Heater (`heater`)**
-   - The heating element is **always ON** throughout the machine operation.
-2. **Conveyor Motor (`motorConveyor`)**
-   - Moves products along the conveyor belt.
-3. **Punch Motor (`motorPunch`)**
-   - Activates the punching or pressing mechanism.
-4. **Limit Switches**
-   - Four limit switches detect positions of the punch and conveyor:
-     - Conveyor IN position
-     - Conveyor OUT position
-     - Punch DOWN position
-     - Punch UP position
-5. **Start Button**
-   - A push-button to start the complete cycle.
-## Workflow
+1.  **Bộ gia nhiệt (`heater`)**
+    *   Bộ phận gia nhiệt **luôn BẬT** trong suốt quá trình vận hành máy.
+2.  **Động cơ băng tải (`motorConveyor`)**
+    *   Di chuyển sản phẩm dọc theo băng tải.
+3.  **Động cơ dập (`motorPunch`)**
+    *   Kích hoạt cơ chế dập hoặc ép.
+4.  **Công tắc hành trình**
+    *   Bốn công tắc hành trình phát hiện vị trí của cơ chế dập và băng tải:
+        *   Vị trí Băng tải VÀO
+        *   Vị trí Băng tải RA
+        *   Vị trí Dập XUỐNG
+        *   Vị trí Dập LÊN
+5.  **Nút khởi động**
+    *   Một nút nhấn để bắt đầu chu trình hoàn chỉnh.
 
-The operational sequence, implemented in the `Process` class, is as follows:
+## Quy trình làm việc
 
-1. The system remains idle until the **Start Button** is pressed.
-2. **Heater turns ON and remains ON.**
-3. The **Conveyor Motor** runs forward until the **IN limit switch** is triggered (product moves into position).
-4. The **Punch Motor** moves **DOWN** until the **DOWN limit switch** is triggered.
-5. The system **waits until the heater reaches sufficient temperature** (or a fixed heating delay).
-6. The **Punch Motor** moves partially **UP** (dở lên) until the **UP limit switch** is triggered.
-7. The **Conveyor Motor** runs again to move the product OUT until the **OUT limit switch** is triggered.
-8. The system returns to idle, waiting for the next cycle.
-9. **Heater remains ON** for subsequent cycles.
+Trình tự hoạt động, được triển khai trong lớp `Process`, như sau:
 
-This logic ensures the heater is always active and the punch/conveyor operate in precise sequence.
+1.  Hệ thống ở trạng thái chờ cho đến khi **Nút khởi động** được nhấn.
+2.  **Bộ gia nhiệt BẬT và duy trì trạng thái BẬT.**
+3.  **Động cơ băng tải** chạy về phía trước cho đến khi **công tắc hành trình VÀO** được kích hoạt (sản phẩm di chuyển vào vị trí).
+4.  **Động cơ dập** di chuyển **XUỐNG** cho đến khi **công tắc hành trình XUỐNG** được kích hoạt.
+5.  Hệ thống **chờ cho đến khi bộ gia nhiệt đạt đủ nhiệt độ** (hoặc một độ trễ gia nhiệt cố định).
+6.  **Động cơ dập** di chuyển một phần **LÊN** cho đến khi **công tắc hành trình LÊN** được kích hoạt.
+7.  **Động cơ băng tải** chạy lại để di chuyển sản phẩm RA cho đến khi **công tắc hành trình RA** được kích hoạt.
+8.  Hệ thống trở về trạng thái chờ, chờ chu trình tiếp theo.
+9.  **Bộ gia nhiệt vẫn BẬT** cho các chu trình tiếp theo.
+
+Logic này đảm bảo bộ gia nhiệt luôn hoạt động và cơ chế dập/băng tải hoạt động theo trình tự chính xác.
+
+---
+
+## Phần mềm & Cấu trúc
+
+*   **Framework:** [Arduino](https://www.arduino.cc/)
+*   **Hệ thống xây dựng:** [PlatformIO](https://platformio.org/)
+*   **Ngôn ngữ:** C++
+*   **Các tệp chính:**
+    *   `src/main.cpp`: Điểm vào. Khởi tạo tất cả các đối tượng và bắt đầu vòng lặp chính.
+    *   `src/process.cpp`: Chứa logic quy trình làm việc cốt lõi được mô tả ở trên.
+    *   `src/motor.cpp`: Lớp điều khiển động cơ (bật/tắt).
+    *   `src/heater.cpp`: Lớp điều khiển bộ gia nhiệt (bật/tắt).
+    *   `src/pinConfig.h`: Định nghĩa ánh xạ chân cho tất cả phần cứng.
 
 ---
 
-## Software & Structure
+## Cách xây dựng
 
-- **Framework:** [Arduino](https://www.arduino.cc/)
-- **Build System:** [PlatformIO](https://platformio.org/)
-- **Language:** C++
-- **Key Files:**
-  - `src/main.cpp`: Entry point. Initializes all objects and starts the main loop.
-  - `src/process.cpp`: Contains the core workflow logic described above.
-  - `src/motor.cpp`: Motor control class (start/stop).
-  - `src/heater.cpp`: Heater control class (on/off).
-  - `src/pinConfig.h`: Defines pin mapping for all hardware.
+1.  Cài đặt [Visual Studio Code](https://code.visualstudio.com/) và tiện ích mở rộng [PlatformIO IDE](https://platformio.org/platformio-ide).
+2.  Clone kho lưu trữ này.
+3.  Mở thư mục dự án trong VS Code.
+4.  Để xây dựng dự án, chạy lệnh: `platformio run`
+5.  Để xây dựng và tải lên bo mạch đã kết nối, chạy: `platformio run --target upload`
 
----
-## How to Build
+## Các vấn đề đã biết
 
-1.  Install [Visual Studio Code](https://code.visualstudio.com/) and the [PlatformIO IDE extension](https://platformio.org/platformio-ide).
-2.  Clone this repository.
-3.  Open the project folder in VS Code.
-4.  To build the project, run the command: `platformio run`
-5.  To build and upload to a connected board, run: `platformio run --target upload`
-
-## Known Issues
-
--   The `main.cpp` file is currently out of sync with the `Process` class. It fails to create and pass the required `Heater` object during the initialization of the `process` object, which will cause a **compilation error**. This needs to be fixed for the project to build successfully.
+*   Tệp `main.cpp` hiện không đồng bộ với lớp `Process`. Nó không tạo và truyền đối tượng `Heater` cần thiết trong quá trình khởi tạo đối tượng `process`, điều này sẽ gây ra **lỗi biên dịch**. Điều này cần được khắc phục để dự án xây dựng thành công.
