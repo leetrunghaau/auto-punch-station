@@ -181,8 +181,7 @@ This schematic implements a **multi-channel AC control system** based on ATmega3
 
 ## 📝 References
 
-- `Sheet1.pdf` schematic diagram
-- Motor datasheet (`5RK120RGU CF`)
+- `schematic.pdf` schematic diagram
 - MOC3063M datasheet
 - EL357 datasheet
 
